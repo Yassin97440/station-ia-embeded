@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station IA - Assistant Vocal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #34d399;
+            --accent: #064e3b;
+            --bg-dark: #0a0f0d;
+            --bg-card: #111916;
+            --bg-card-hover: #1a2420;
+            --text: #f0fdf4;
+            --text-muted: #6ee7b7;
+            --border: #1e3a2f;
+            --glow: rgba(16, 185, 129, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background gradient effect */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(6, 78, 59, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(52, 211, 153, 0.05) 0%, transparent 30%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Animated particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 32px var(--glow);
+        }
+
+        .logo-text {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text) 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        /* Main Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 
+                0 4px 6px rgba(0, 0, 0, 0.1),
+                0 24px 48px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        /* Record Button */
+        .record-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .record-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 
+                0 8px 32px var(--glow),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2);
+        }
+
+        .record-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 
+                0 12px 48px var(--glow),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2);
+        }
+
+        .record-btn:active {
+            transform: scale(0.98);
+        }
+
+        .record-btn.recording {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            animation: pulse 1.5s infinite;
+            box-shadow: 
+                0 8px 32px rgba(239, 68, 68, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 8px 48px rgba(239, 68, 68, 0.6); }
+        }
+
+        .record-btn svg {
+            width: 48px;
+            height: 48px;
+            fill: white;
+            transition: all 0.3s ease;
+        }
+
+        .record-btn.recording svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .record-label {
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Status indicator */
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        .status.processing .status-dot {
+            background: #f59e0b;
+            animation: spin 1s linear infinite;
+        }
+
+        .status.error .status-dot {
+            background: #ef4444;
+            animation: none;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Result section */
+        .result-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .result-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text);
+            min-height: 3rem;
+        }
+
+        .result-text.placeholder {
+            color: rgba(110, 231, 183, 0.4);
+            font-style: italic;
+        }
+
+        /* Metadata */
+        .metadata {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .meta-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(110, 231, 183, 0.5);
+        }
+
+        .meta-value {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(110, 231, 183, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .card {
+                padding: 1.5rem;
+            }
+            
+            .record-btn {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .record-btn svg {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated particles background -->
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">🌿</div>
+                <span class="logo-text">Station IA</span>
+            </div>
+            <p class="tagline">Assistant Vocal Intelligent</p>
+        </header>
+
+        <main class="card">
+            <div class="status" id="status">
+                <span class="status-dot"></span>
+                <span id="status-text">Prêt à écouter</span>
+            </div>
+
+            <div class="record-section">
+                <button class="record-btn" id="recordBtn" title="Maintenir pour enregistrer">
+                    <svg viewBox="0 0 24 24" id="micIcon">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z"/>
+                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
+                    <svg viewBox="0 0 24 24" id="stopIcon" style="display: none;">
+                        <rect x="6" y="6" width="12" height="12" rx="2"/>
+                    </svg>
+                </button>
+                <span class="record-label" id="recordLabel">Cliquer pour enregistrer</span>
+            </div>
+
+            <div class="result-section">
+                <div class="result-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                    </svg>
+                    Transcription
+                </div>
+                <div class="result-text placeholder" id="resultText">
+                    Votre message apparaîtra ici...
+                </div>
+                <div class="metadata" id="metadata" style="display: none;">
+                    <div class="meta-item">
+                        <span class="meta-label">Langue</span>
+                        <span class="meta-value" id="metaLang">-</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Durée audio</span>
+                        <span class="meta-value" id="metaDuration">-</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Temps traitement</span>
+                        <span class="meta-value" id="metaProcessing">-</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            Station IA v0.1 — PoC Assistant Vocal
+        </footer>
+    </div>
+
+    <script>
+        // Configuration
+        const API_URL = 'http://localhost:8000';
+        
+        // Elements
+        const recordBtn = document.getElementById('recordBtn');
+        const recordLabel = document.getElementById('recordLabel');
+        const micIcon = document.getElementById('micIcon');
+        const stopIcon = document.getElementById('stopIcon');
+        const status = document.getElementById('status');
+        const statusText = document.getElementById('status-text');
+        const resultText = document.getElementById('resultText');
+        const metadata = document.getElementById('metadata');
+        const metaLang = document.getElementById('metaLang');
+        const metaDuration = document.getElementById('metaDuration');
+        const metaProcessing = document.getElementById('metaProcessing');
+
+        // State
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // Create particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // Update status
+        function setStatus(text, type = 'ready') {
+            statusText.textContent = text;
+            status.className = 'status ' + type;
+        }
+
+        // Start recording
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1
+                    } 
+                });
+                
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+                });
+                
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    stream.getTracks().forEach(track => track.stop());
+                    await sendAudio();
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                
+                recordBtn.classList.add('recording');
+                micIcon.style.display = 'none';
+                stopIcon.style.display = 'block';
+                recordLabel.textContent = 'Cliquer pour arrêter';
+                setStatus('Enregistrement en cours...', 'recording');
+                
+            } catch (err) {
+                console.error('Erreur micro:', err);
+                setStatus('Erreur: accès micro refusé', 'error');
+            }
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                
+                recordBtn.classList.remove('recording');
+                micIcon.style.display = 'block';
+                stopIcon.style.display = 'none';
+                recordLabel.textContent = 'Cliquer pour enregistrer';
+            }
+        }
+
+        // Send audio to API
+        async function sendAudio() {
+            setStatus('Transcription en cours...', 'processing');
+            
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/v1/stt`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update result
+                resultText.textContent = data.text || '(aucun texte détecté)';
+                resultText.classList.remove('placeholder');
+                
+                // Update metadata
+                metaLang.textContent = data.language?.toUpperCase() || '-';
+                metaDuration.textContent = data.duration ? `${data.duration.toFixed(1)}s` : '-';
+                metaProcessing.textContent = data.processing_time ? `${data.processing_time}s` : '-';
+                metadata.style.display = 'flex';
+                
+                setStatus('Transcription terminée', 'ready');
+                
+            } catch (err) {
+                console.error('Erreur API:', err);
+                setStatus('Erreur de connexion à l\'API', 'error');
+                resultText.textContent = 'Erreur: impossible de contacter le serveur';
+                resultText.classList.remove('placeholder');
+            }
+        }
+
+        // Event listeners
+        recordBtn.addEventListener('click', () => {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        // Keyboard shortcut (space bar)
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && e.target === document.body) {
+                e.preventDefault();
+                if (isRecording) {
+                    stopRecording();
+                } else {
+                    startRecording();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
