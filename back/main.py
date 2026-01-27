@@ -10,21 +10,26 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from services.STTService import STTService
 from services.MistralService import MistralService
+from services.TTSService import TTSService
 
 # Variable globale pour le service STT
 stt_service: STTService = None
 mistral_service: MistralService = None
-
+tts_service: TTSService = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialise les services au démarrage de l'application"""
-    global stt_service, mistral_service
+    global stt_service, mistral_service, tts_service
     print("🚀 Chargement du modèle Whisper...")
     stt_service = STTService(model_size="small", device="cpu")
     print("✅ Modèle chargé !")
     print("🚀 Chargement du modèle Mistral...")
     mistral_service = MistralService(model="mistral-medium-latest")
+    print("✅ Modèle chargé !")
+    print("🚀 Chargement du modèle TTS...")
+    model_path = os.path.join(os.path.dirname(__file__), "services", "models", "mls", "fr_FR-mls-medium.onnx")
+    tts_service = TTSService(model_path=model_path, use_cuda=False)
     print("✅ Modèle chargé !")
     yield
     # Cleanup si nécessaire
@@ -79,11 +84,15 @@ async def speech_to_text(audio: UploadFile = File(...)):
         start_time = time.time()
         text, metadata = stt_service.transcribe(tmp_path)
         response = mistral_service.chat(text).choices[0].message.content
+        vocal_response = tts_service.synthesize_to_file(response, "response.wav")
         processing_time = time.time() - start_time
+        print(response)
+        
         
         return {
             "text": text,
             "response": response,
+            "vocal_response": vocal_response,
             "language": metadata["language"],
             "duration": metadata["duration"],
             "processing_time": round(processing_time, 2)
