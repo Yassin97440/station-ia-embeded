@@ -3,6 +3,8 @@ from typing import Optional, Generator
 import wave
 import io
 import os
+import re
+import unicodedata
 
 
 class TTSService:
@@ -55,7 +57,7 @@ class TTSService:
         )
         
         with wave.open(output_path, "wb") as wav_file:
-            self.voice.synthesize_wav(text, wav_file, syn_config=syn_config)
+            self.voice.synthesize_wav(normalize_text_for_tts(text), wav_file, syn_config=syn_config)
         
         return output_path
     
@@ -91,7 +93,7 @@ class TTSService:
         
         buffer = io.BytesIO()
         with wave.open(buffer, "wb") as wav_file:
-            self.voice.synthesize_wav(text, wav_file, syn_config=syn_config)
+            self.voice.synthesize_wav(normalize_text_for_tts(text), wav_file, syn_config=syn_config)
         
         buffer.seek(0)
         return buffer.read()
@@ -113,7 +115,52 @@ class TTSService:
         for chunk in self.voice.synthesize(text):
             yield chunk.audio_int16_bytes
 
+def normalize_text_for_tts(text: str) -> str:
+    if not text:
+        return ""
 
+    # 1. Normalisation unicode (supprime caractères bizarres)
+    text = unicodedata.normalize("NFKC", text)
+
+    # 2. Supprimer les retours à la ligne
+    text = text.replace("\n", " ").replace("\r", " ")
+
+    # 3. Remplacer ponctuation agressive par des points
+    text = text.replace("?", ".").replace("!", ".")
+
+    # 4. Supprimer tout caractère non souhaité
+    # (lettres, chiffres, espace, point, virgule, apostrophe simple)
+    text = re.sub(r"[^a-zA-ZÀ-ÿ0-9\s\.,']", " ", text)
+
+    # 5. Réduire les espaces multiples
+    text = re.sub(r"\s+", " ", text)
+
+    # 6. Découper les phrases trop longues
+    sentences = re.split(r"\.", text)
+    clean_sentences = []
+
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+
+        # Coupe les phrases trop longues (≈ 20 mots max)
+        words = sentence.split(" ")
+        while len(words) > 20:
+            chunk = words[:20]
+            clean_sentences.append(" ".join(chunk))
+            words = words[20:]
+
+        if words:
+            clean_sentences.append(" ".join(words))
+
+    # 7. Recomposer avec des points
+    text = ". ".join(clean_sentences)
+
+    # 8. Nettoyage final
+    text = text.strip(" .") + "."
+
+    return text
 # Test
 # tts = TTSService("path/to/fr_FR-siwis-medium.onnx")
 # tts.synthesize_to_file("Bonjour, comment allez-vous?", "output.wav")

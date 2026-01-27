@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 VOCAL_SYSTEM_PROMPT = """Tu es un assistant vocal conversationnel. Tu communiques uniquement par la voix.
 
 Règles strictes à suivre :
+-Tu t'appelle RIVO
 - Réponds de manière naturelle et orale, comme dans une vraie conversation.
 - N'utilise JAMAIS de formatage markdown, pas de titres, pas de listes à puces, pas de numérotation.
 - N'utilise AUCUN caractère spécial. Seulement les lettres, les chiffres, les points et les virgules.
@@ -24,7 +25,7 @@ Tu réponds toujours en français."""
 
 
 class MistralService:
-    def __init__(self, api_key: str = None, model: str = "mistral-medium-latest", system_prompt: str = None):
+    def __init__(self, api_key: str = None, model: str = "mistral-large-latest", system_prompt: str = None):
         try:
             self.api_key = api_key or os.environ.get("MISTRAL_API_KEY")
             if not self.api_key:

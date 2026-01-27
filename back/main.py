@@ -27,14 +27,15 @@ async def lifespan(app: FastAPI):
     stt_service = STTService(model_size="small", device="cpu")
     print("✅ Modèle chargé !")
     print("🚀 Chargement du modèle Mistral...")
-    mistral_service = MistralService(model="mistral-medium-latest")
+    mistral_service = MistralService(model="mistral-small-latest")
     print("✅ Modèle chargé !")
     print("🚀 Chargement du modèle TTS...")
     model_path = os.path.join(os.path.dirname(__file__), "services", "models", "mls", "fr_FR-mls-medium.onnx")
     tts_service = TTSService(model_path=model_path, use_cuda=False)
     print("✅ Modèle chargé !")
     print("🚀 Chargement du modèle Coqui...")
-    coqui_service = CoquiService(model_name="tts_models/fr/css10/vits")
+    coqui_service = CoquiService(model_name="tts_models/fr/mai/tacotron2-DDC")
+    print("Coqui, liste des modèles:", coqui_service.list_models())
     print("✅ Modèle chargé !")
     yield
     # Cleanup si nécessaire
@@ -90,8 +91,8 @@ async def speech_to_text(audio: UploadFile = File(...)):
         text, metadata = stt_service.transcribe(tmp_path)
         response = mistral_service.chat(text).choices[0].message.content
         
-        # Générer l'audio et l'encoder en base64
-        audio_bytes = tts_service.synthesize_to_bytes(response)
+        # Générer l'audio via Coqui TTS et l'encoder en base64
+        audio_bytes, audio_path = coqui_service.synthesize_and_save(response, "response.wav")
         audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
         
         processing_time = time.time() - start_time
