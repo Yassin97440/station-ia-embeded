@@ -4,6 +4,7 @@ import uvicorn
 import tempfile
 import os
 import time
+import base64
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,16 +12,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from services.STTService import STTService
 from services.MistralService import MistralService
 from services.TTSService import TTSService
+from services.CoquiService import CoquiService
 
 # Variable globale pour le service STT
 stt_service: STTService = None
 mistral_service: MistralService = None
 tts_service: TTSService = None
-
+coqui_service: CoquiService = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialise les services au démarrage de l'application"""
-    global stt_service, mistral_service, tts_service
+    global stt_service, mistral_service, tts_service, coqui_service
     print("🚀 Chargement du modèle Whisper...")
     stt_service = STTService(model_size="small", device="cpu")
     print("✅ Modèle chargé !")
@@ -30,6 +32,9 @@ async def lifespan(app: FastAPI):
     print("🚀 Chargement du modèle TTS...")
     model_path = os.path.join(os.path.dirname(__file__), "services", "models", "mls", "fr_FR-mls-medium.onnx")
     tts_service = TTSService(model_path=model_path, use_cuda=False)
+    print("✅ Modèle chargé !")
+    print("🚀 Chargement du modèle Coqui...")
+    coqui_service = CoquiService(model_name="tts_models/fr/css10/vits")
     print("✅ Modèle chargé !")
     yield
     # Cleanup si nécessaire
@@ -84,15 +89,18 @@ async def speech_to_text(audio: UploadFile = File(...)):
         start_time = time.time()
         text, metadata = stt_service.transcribe(tmp_path)
         response = mistral_service.chat(text).choices[0].message.content
-        vocal_response = tts_service.synthesize_to_file(response, "response.wav")
+        
+        # Générer l'audio et l'encoder en base64
+        audio_bytes = tts_service.synthesize_to_bytes(response)
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        
         processing_time = time.time() - start_time
         print(response)
-        
         
         return {
             "text": text,
             "response": response,
-            "vocal_response": vocal_response,
+            "audio": audio_base64,
             "language": metadata["language"],
             "duration": metadata["duration"],
             "processing_time": round(processing_time, 2)

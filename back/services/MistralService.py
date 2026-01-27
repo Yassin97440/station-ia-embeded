@@ -8,13 +8,29 @@ load_dotenv()
 # Configuration du logger
 logger = logging.getLogger(__name__)
 
+VOCAL_SYSTEM_PROMPT = """Tu es un assistant vocal conversationnel. Tu communiques uniquement par la voix.
+
+Règles strictes à suivre :
+- Réponds de manière naturelle et orale, comme dans une vraie conversation.
+- N'utilise JAMAIS de formatage markdown, pas de titres, pas de listes à puces, pas de numérotation.
+- N'utilise AUCUN caractère spécial. Seulement les lettres, les chiffres, les points et les virgules.
+- Pas d'astérisques, de tirets, de crochets, de parenthèses inutiles, ni d'émojis.
+- Pas de contenu visuel comme des tableaux, du code, ou des schémas.
+- Fais des réponses courtes et concises, deux ou trois phrases maximum.
+- Pose des questions pour encourager l'interaction et la conversation.
+- Sois chaleureux et engageant, comme un ami qui discute.
+
+Tu réponds toujours en français."""
+
+
 class MistralService:
-    def __init__(self, api_key: str = None, model: str = "mistral-medium-latest"):
+    def __init__(self, api_key: str = None, model: str = "mistral-medium-latest", system_prompt: str = None):
         try:
             self.api_key = api_key or os.environ.get("MISTRAL_API_KEY")
             if not self.api_key:
                 raise ValueError("MISTRAL_API_KEY non définie")
             self.model = model
+            self.system_prompt = system_prompt or VOCAL_SYSTEM_PROMPT
             self.client = Mistral(api_key=self.api_key)
             logger.info("MistralService initialisé avec succès")
         except ValueError as e:
@@ -34,6 +50,10 @@ class MistralService:
             response = self.client.chat.complete(
                 model=self.model,
                 messages=[
+                    {
+                        "role": "system",
+                        "content": self.system_prompt,
+                    },
                     {
                         "role": "user",
                         "content": message,
