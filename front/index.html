@@ -275,6 +275,25 @@
             color: var(--primary-light);
         }
 
+        /* Audio player */
+        .audio-player {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .audio-player audio {
+            width: 100%;
+            height: 40px;
+            border-radius: 20px;
+            outline: none;
+        }
+
+        /* Style for webkit browsers */
+        .audio-player audio::-webkit-media-controls-panel {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
         .result-label {
             font-size: 0.75rem;
             text-transform: uppercase;
@@ -406,6 +425,9 @@
                     Réponse IA
                 </div>
                 <div class="result-text" id="responseText"></div>
+                <div class="audio-player" id="audioPlayerContainer" style="display: none;">
+                    <audio id="audioPlayer" controls></audio>
+                </div>
             </div>
 
             <div class="metadata" id="metadata" style="display: none;">
@@ -443,6 +465,8 @@
         const resultText = document.getElementById('resultText');
         const responseSection = document.getElementById('responseSection');
         const responseText = document.getElementById('responseText');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioPlayerContainer = document.getElementById('audioPlayerContainer');
         const metadata = document.getElementById('metadata');
         const metaLang = document.getElementById('metaLang');
         const metaDuration = document.getElementById('metaDuration');
@@ -554,6 +578,18 @@
                 if (data.response) {
                     responseText.textContent = data.response;
                     responseSection.style.display = 'block';
+                }
+                
+                // Play audio response
+                if (data.audio) {
+                    const audioSrc = `data:audio/wav;base64,${data.audio}`;
+                    audioPlayer.src = audioSrc;
+                    audioPlayerContainer.style.display = 'block';
+                    
+                    // Jouer automatiquement
+                    audioPlayer.play().catch(err => {
+                        console.log('Autoplay bloqué, cliquez sur play:', err);
+                    });
                 }
                 
                 // Update metadata
