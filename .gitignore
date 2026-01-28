@@ -239,3 +239,10 @@ temp/
 *.key
 secrets/
 credentials/
+back/tts-models-cache/tts_models--fr--mai--tacotron2-DDC/config.json
+back/tts-models-cache/tts_models--fr--mai--tacotron2-DDC/model_file.pth
+back/tts-models-cache/tts_models--fr--mai--tacotron2-DDC/scale_stats.npy
+back/tts-models-cache/vocoder_models--universal--libri-tts--fullband-melgan/config.json
+back/tts-models-cache/vocoder_models--universal--libri-tts--fullband-melgan/model_file.pth
+back/tts-models-cache/vocoder_models--universal--libri-tts--fullband-melgan/scale_stats.npy
+back/tts-output/response.wav
