@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const user = useSupabaseUser()
+
 // Types
 interface Stat {
   label: string
@@ -16,6 +18,22 @@ interface Conversation {
   messages: number
   mode: 'voice' | 'text'
 }
+
+// User display name
+const displayName = computed(() => {
+  if (!user.value) return 'Utilisateur'
+
+  const metadata = user.value.user_metadata
+  if (metadata?.full_name) {
+    // Get first name only
+    return metadata.full_name.split(' ')[0]
+  }
+
+  const email = user.value.email
+  if (email) return email.split('@')[0]
+
+  return 'Utilisateur'
+})
 
 // Stats data (à remplacer par de vraies données)
 const stats = ref<Stat[]>([
@@ -101,7 +119,7 @@ const quickActions = [
     <!-- Welcome section -->
     <section class="text-center">
       <h1 class="text-3xl font-bold text-gradient-emerald md:text-4xl">
-        Bonjour, Yassin 👋
+        Bonjour, {{ displayName }} 👋
       </h1>
       <p class="mt-2 text-emerald-300/60">
         Bienvenue sur votre assistant vocal intelligent

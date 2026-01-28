@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.13.0",
+    "@nuxtjs/supabase": "^2.0.3",
     "eslint": "^9.39.2",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.2.4"

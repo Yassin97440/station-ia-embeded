@@ -2,6 +2,8 @@
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
 
 const route = useRoute()
+const supabase = useSupabaseClient()
+const user = useSupabaseUser()
 
 // Navigation items
 const navItems = computed<NavigationMenuItem[]>(() => [
@@ -19,8 +21,14 @@ const navItems = computed<NavigationMenuItem[]>(() => [
   }
 ])
 
+// Logout function
+const logout = async () => {
+  await supabase.auth.signOut()
+  await navigateTo('/login')
+}
+
 // User dropdown items
-const userMenuItems: DropdownMenuItem[][] = [
+const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
       label: 'Profil',
@@ -35,10 +43,40 @@ const userMenuItems: DropdownMenuItem[][] = [
     {
       label: 'Déconnexion',
       icon: 'i-lucide-log-out',
-      color: 'error' as const
+      color: 'error' as const,
+      onSelect: logout
     }
   ]
-]
+])
+
+// User display name
+const displayName = computed(() => {
+  if (!user.value) return 'Utilisateur'
+
+  // Try to get full_name from user metadata
+  const metadata = user.value.user_metadata
+  if (metadata?.full_name) return metadata.full_name
+
+  // Fallback to email
+  const email = user.value.email
+  if (email) return email.split('@')[0]
+
+  return 'Utilisateur'
+})
+
+// User avatar URL
+const avatarUrl = computed(() => {
+  if (!user.value) return ''
+
+  // Check for OAuth avatar
+  const metadata = user.value.user_metadata
+  if (metadata?.avatar_url) return metadata.avatar_url
+  if (metadata?.picture) return metadata.picture
+
+  // Generate from email
+  const seed = user.value.email || user.value.id
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`
+})
 
 // Footer links
 const footerLinks = [
@@ -79,11 +117,11 @@ const footerLinks = [
             class="gap-2"
           >
             <UAvatar
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+              :src="avatarUrl"
               size="xs"
             />
             <span class="hidden text-sm text-emerald-100 md:block">
-              Yassin
+              {{ displayName }}
             </span>
             <UIcon
               name="i-lucide-chevron-down"
