@@ -29,13 +29,12 @@ async def lifespan(app: FastAPI):
     print("🚀 Chargement du modèle Mistral...")
     mistral_service = MistralService(model="mistral-small-latest")
     print("✅ Modèle chargé !")
-    print("🚀 Chargement du modèle TTS...")
-    model_path = os.path.join(os.path.dirname(__file__), "services", "models", "mls", "fr_FR-mls-medium.onnx")
-    tts_service = TTSService(model_path=model_path, use_cuda=False)
-    print("✅ Modèle chargé !")
+    # print("🚀 Chargement du modèle TTS...")
+    # model_path = os.path.join(os.path.dirname(__file__), "services", "models", "mls", "fr_FR-mls-medium.onnx")
+    # tts_service = TTSService(model_path=model_path, use_cuda=False)
+    # print("✅ Modèle chargé !")
     print("🚀 Chargement du modèle Coqui...")
     coqui_service = CoquiService(model_name="tts_models/fr/mai/tacotron2-DDC")
-    print("Coqui, liste des modèles:", coqui_service.list_models())
     print("✅ Modèle chargé !")
     yield
     # Cleanup si nécessaire
@@ -75,6 +74,7 @@ async def speech_to_text(audio: UploadFile = File(...)):
     
     Retourne le texte transcrit et les métadonnées.
     """
+    print("Début de la fonction speech_to_text ☣️")
     if stt_service is None:
         raise HTTPException(status_code=503, detail="Service STT non initialisé")
     
@@ -89,15 +89,17 @@ async def speech_to_text(audio: UploadFile = File(...)):
     try:
         start_time = time.time()
         text, metadata = stt_service.transcribe(tmp_path)
+        print(text)
         response = mistral_service.chat(text).choices[0].message.content
+        print(response)
         
         # Générer l'audio via Coqui TTS et l'encoder en base64
         audio_bytes, audio_path = coqui_service.synthesize_and_save(response, "response.wav")
+        print("Audio généré avec succès")
         audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
-        
+        print("Audio encodé en base64")
         processing_time = time.time() - start_time
-        print(response)
-        
+        print("Temps de traitement: ", processing_time)
         return {
             "text": text,
             "response": response,

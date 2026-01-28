@@ -19,6 +19,7 @@ class CoquiService:
         docker_image: str = "ghcr.io/coqui-ai/tts-cpu",
         model_name: str = "tts_models/fr/css10/vits",
         output_dir: str = None,
+        model_cache_dir: str = None,
         use_cuda: bool = False
     ):
         """
@@ -28,6 +29,7 @@ class CoquiService:
             docker_image: Image Docker à utiliser (défaut: ghcr.io/coqui-ai/tts-cpu)
             model_name: Nom du modèle TTS (défaut: tts_models/fr/css10/vits pour le français)
             output_dir: Répertoire de sortie pour les fichiers audio
+            model_cache_dir: Répertoire pour le cache des modèles (évite le re-téléchargement)
             use_cuda: Utiliser GPU (nécessite ghcr.io/coqui-ai/tts au lieu de tts-cpu)
         """
         self.docker_image = docker_image
@@ -40,10 +42,18 @@ class CoquiService:
         else:
             self.output_dir = output_dir
         
-        # Créer le répertoire de sortie
+        # Répertoire de cache des modèles (pour éviter de re-télécharger à chaque requête)
+        if model_cache_dir is None:
+            self.model_cache_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tts-models-cache")
+        else:
+            self.model_cache_dir = model_cache_dir
+        
+        # Créer les répertoires
         os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.model_cache_dir, exist_ok=True)
         
         logger.info(f"CoquiService initialisé - Image: {self.docker_image}, Modèle: {self.model_name}")
+        logger.info(f"Cache des modèles: {self.model_cache_dir}")
     
     def synthesize_to_file(
         self, 
@@ -73,10 +83,11 @@ class CoquiService:
         output_path = os.path.join(self.output_dir, output_filename)
         
         # Construire la commande Docker
-        # Note: On monte le répertoire de sortie dans le conteneur
+        # Note: On monte le répertoire de sortie ET le cache des modèles dans le conteneur
         cmd = [
             "docker", "run", "--rm",
             "-v", f"{self.output_dir}:/output",
+            "-v", f"{self.model_cache_dir}:/root/.local/share/tts",  # Cache des modèles persistant
             self.docker_image,
             "--text", text,
             "--model_name", self.model_name,
@@ -93,6 +104,8 @@ class CoquiService:
                 cmd,
                 capture_output=True,
                 text=True,
+                encoding='utf-8',
+                errors='replace',  # Remplace les caractères non décodables au lieu de planter
                 check=True
             )
             
@@ -189,7 +202,14 @@ class CoquiService:
         ]
         
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                cmd, 
+                capture_output=True, 
+                text=True, 
+                encoding='utf-8',
+                errors='replace',
+                check=True
+            )
             return result.stdout
         except subprocess.CalledProcessError as e:
             logger.error(f"Erreur lors de la liste des modèles: {e.stderr}")
