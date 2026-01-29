@@ -89,7 +89,13 @@ watch(mode, () => {
     <!-- Chat header -->
     <div class="mb-4 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <UButton to="/" color="neutral" variant="ghost" icon="i-lucide-arrow-left" size="sm" />
+        <UButton
+          to="/"
+          color="neutral"
+          variant="ghost"
+          icon="i-lucide-arrow-left"
+          size="sm"
+        />
         <div>
           <h1 class="font-semibold text-white">
             Nouvelle conversation
@@ -102,9 +108,14 @@ watch(mode, () => {
 
       <!-- Mode toggle -->
       <UButtonGroup size="sm">
-        <UButton v-for="item in modeItems" :key="item.value" :icon="item.icon"
-          :variant="mode === item.value ? 'solid' : 'ghost'" :color="mode === item.value ? 'primary' : 'neutral'"
-          @click="mode = item.value as 'voice' | 'text'">
+        <UButton
+          v-for="item in modeItems"
+          :key="item.value"
+          :icon="item.icon"
+          :variant="mode === item.value ? 'solid' : 'ghost'"
+          :color="mode === item.value ? 'primary' : 'neutral'"
+          @click="mode = item.value as 'voice' | 'text'"
+        >
           <span class="hidden sm:inline">
             {{ item.label }}
           </span>
@@ -113,15 +124,26 @@ watch(mode, () => {
     </div>
 
     <!-- Messages area -->
-    <UCard :ui="{
-      root: 'flex-1 flex flex-col overflow-hidden bg-[#111916] border-emerald-900/50',
-      body: 'flex-1 overflow-y-auto p-4'
-    }">
-      <div ref="messagesContainer" class="h-full overflow-y-auto">
+    <UCard
+      :ui="{
+        root: 'flex-1 flex flex-col overflow-hidden bg-[#111916] border-emerald-900/50',
+        body: 'flex-1 overflow-y-auto p-4'
+      }"
+    >
+      <div
+        ref="messagesContainer"
+        class="h-full overflow-y-auto"
+      >
         <!-- Empty state -->
-        <div v-if="messages.length === 0" class="flex h-full flex-col items-center justify-center text-center">
+        <div
+          v-if="messages.length === 0"
+          class="flex h-full flex-col items-center justify-center text-center"
+        >
           <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-900/50">
-            <UIcon name="i-lucide-bot" class="h-8 w-8 text-emerald-400" />
+            <UIcon
+              name="i-lucide-bot"
+              class="h-8 w-8 text-emerald-400"
+            />
           </div>
           <h2 class="text-lg font-medium text-white">
             Comment puis-je vous aider ?
@@ -132,18 +154,35 @@ watch(mode, () => {
 
           <!-- Suggestions -->
           <div class="mt-6 flex flex-wrap justify-center gap-2">
-            <UButton v-for="suggestion in suggestions" :key="suggestion.label" variant="outline" size="sm"
-              color="neutral" :icon="suggestion.icon" class="text-emerald-300/70"
-              @click="sendMessage(suggestion.label)">
+            <UButton
+              v-for="suggestion in suggestions"
+              :key="suggestion.label"
+              variant="outline"
+              size="sm"
+              color="neutral"
+              :icon="suggestion.icon"
+              class="text-emerald-300/70"
+              @click="sendMessage(suggestion.label)"
+            >
               {{ suggestion.label }}
             </UButton>
           </div>
         </div>
 
         <!-- Messages list -->
-        <div v-else class="space-y-4">
-          <ChatMessage v-for="msg in messages" :key="msg.id" :role="msg.role" :content="msg.content" :time="msg.time"
-            :audio="msg.audio" :actions="msg.actions" />
+        <div
+          v-else
+          class="space-y-4"
+        >
+          <ChatMessage
+            v-for="msg in messages"
+            :key="msg.id"
+            :role="msg.role"
+            :content="msg.content"
+            :time="msg.time"
+            :audio="msg.audio"
+            :actions="msg.actions"
+          />
 
           <!-- Typing indicator -->
           <ChatTypingIndicator v-if="isLoading" />
@@ -152,7 +191,12 @@ watch(mode, () => {
     </UCard>
 
     <!-- Input area -->
-    <ChatInput :mode="mode" :is-recording="isRecording" :disabled="isLoading" @send="sendMessage"
-      @toggle-recording="toggleRecording" />
+    <ChatInput
+      :mode="mode"
+      :is-recording="isRecording"
+      :disabled="isLoading"
+      @send="sendMessage"
+      @toggle-recording="toggleRecording"
+    />
   </div>
 </template>
